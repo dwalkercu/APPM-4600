@@ -20,6 +20,8 @@ def driver():
     y[0] = 1
     w = np.zeros(100)
     w[1] = 1
+
+    # initialize the matrix and vector for mat-vec multiplication
     matrix = [[1,2],[2,4]]
     z = [1,1]
 
