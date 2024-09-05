@@ -25,6 +25,7 @@ def driver():
     matrix = [[1,2],[2,4]]
     z = [1,1]
 
+    # for timing the code to see if numpy is faster
     time_start = time.process_time()
     # evaluate the dot product of y and w
     dp = dotProduct(y,w,n)
