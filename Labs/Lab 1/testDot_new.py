@@ -14,6 +14,8 @@ def driver():
     g = lambda x: 6*x**3 + 2*np.sin(x)
     #y = f(x)
     #w = g(x)
+
+    # make y,w orthogonal by utilizing unit vectors
     y = np.zeros(100)
     y[0] = 1
     w = np.zeros(100)
