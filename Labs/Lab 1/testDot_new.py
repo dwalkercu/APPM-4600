@@ -63,6 +63,7 @@ def matVecMul(x,y,n):
     mv = [0] * n
     for j in range(n):
         for x_i in range(n):
+            # this adds the next term for the jth row in the resultant vector
             mv[j] += x[j][x_i] * y[x_i]
     
     return mv
