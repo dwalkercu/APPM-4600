@@ -25,11 +25,14 @@ def driver():
     matrix = [[1,2],[2,4]]
     z = [1,1]
 
-    # for timing the code to see if numpy is faster
+    # for timing the code to see if numpy is faster; start timer
     time_start = time.process_time()
+
     # evaluate the dot product of y and w
     dp = dotProduct(y,w,n)
     mv = matVecMul(matrix, z, 2)
+
+    # end timer and get the difference to get how long it took to execute the code
     time_without_np = time.process_time() - time_start
 
     time_start = time.process_time()
