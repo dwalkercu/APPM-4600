@@ -80,7 +80,7 @@ def f2(x):
     return (x-1)*(x-3)*(x-5)
 
 def f3(x):
-    return (x-1)**2 * (x-3)
+    return ((x-1)**2) * (x-3)
 
 def f4(x):
     return np.sin(x)
@@ -125,22 +125,22 @@ print(f"Q2.c2: {bisection(f4, 0.5, (3*np.pi)/4, 10**-5)}")
 
 ### Q3
 
-# comment out lines 133, 138, and 143 for code that runs through successfully; those functions diverge using fixed point iteration
 
+# note: n_max = 3 was used for the diverging functions to get the code to run successfully
 # (a)
 
 print(f"Q3.a1: {fixedpt(f5, 7**(1/5), 10**-5, 50)}")
-print(f"Q3.a2: {fixedpt(f5, 1, 10**-10, 50)}")
+print(f"Q3.a2: {fixedpt(f5, 1, 10**-10, 3)}")
 
 # (b)
 
 print(f"Q3.b1: {fixedpt(f6, 7**(1/5), 10**-5, 50)}")
-print(f"Q3.b2: {fixedpt(f6, 1, 10**-10, 50)}")
+print(f"Q3.b2: {fixedpt(f6, 1, 10**-10, 3)}")
 
 # (c)
 
 print(f"Q3.c1: {fixedpt(f7, 7**(1/5), 10**-5, 50)}")
-print(f"Q3.c2: {fixedpt(f7, 1, 10**-10, 50)}")
+print(f"Q3.c2: {fixedpt(f7, 1, 10**-10, 3)}")
 
 # (d)
 
