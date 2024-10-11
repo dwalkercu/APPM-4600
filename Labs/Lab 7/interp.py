@@ -52,7 +52,7 @@ def driver():
     plt.plot(xeval,yeval_dd,'c.--')
     plt.legend()
 
-    plt.figure() 
+    plt.figure()
     err_l = abs(yeval_l-fex)
     err_dd = abs(yeval_dd-fex)
     plt.semilogy(xeval,err_l,'ro--',label='lagrange')
@@ -105,4 +105,4 @@ def evalDDpoly(xval, xint,y,N):
 
        
 
-driver()        
+# driver()        
