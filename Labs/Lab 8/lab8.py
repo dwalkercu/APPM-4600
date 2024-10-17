@@ -55,8 +55,8 @@ def create_natural_spline(yint,xint,N):
     C = np.zeros(N)
     D = np.zeros(N)
     for j in range(N):
-       C[j] = # find the C coefficients
-       D[j] = # find the D coefficients
+       C[j] = 0# find the C coefficients
+       D[j] = 0# find the D coefficients
     return(M,C,D)
        
 def eval_local_spline(xeval,xi,xip,Mi,Mip,C,D):
@@ -66,7 +66,7 @@ def eval_local_spline(xeval,xi,xip,Mi,Mip,C,D):
 
     hi = xip-xi
    
-    yeval = 
+    yeval = 0
     return yeval 
     
     
@@ -128,7 +128,7 @@ def driver():
     plt.show()
 
     # cubic spline
-    (M,C,D) = create_natural_spline(yint, xint, N)
+    '''(M,C,D) = create_natural_spline(yint, xint, N)
     yeval = eval_cubic_spline(xeval, Neval, xint, N, M, C, D)
 
     plt.xlabel("x")
@@ -145,7 +145,7 @@ def driver():
     plt.ylabel("Error")
     plt.semilogy(xeval, abs(yeval - yexact))
 
-    plt.show()
+    plt.show()'''
 
 
 if __name__ == "__main__":
