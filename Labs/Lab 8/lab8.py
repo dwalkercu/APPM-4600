@@ -44,11 +44,12 @@ def create_natural_spline(yint,xint,N):
 #  create the matrix A so you can solve for the M values
     A = np.zeros((N+1,N+1))
 
+
 #  Invert A    
     Ainv = inv(A)
 
 # solver for M    
-    M  = np.matmul(Ainv,b)
+    M  = Ainv @ b
     
 #  Create the linear coefficients
     C = np.zeros(N)
@@ -127,14 +128,15 @@ def driver():
     plt.show()
 
     # cubic spline
+    (M,C,D) = create_natural_spline(yint, xint, N)
     yeval = eval_cubic_spline(xeval, Neval, xint, N, M, C, D)
 
     plt.xlabel("x")
     plt.ylabel("y")
     plt.title("Cubic Spline Interpolation")
 
-    plt.plot(xeval, yeval, 'r-')
-    plt.plot(xeval, yexact)
+    plt.plot(xeval, yeval, 'ro-')
+    plt.plot(xeval, yexact, 'bs--')
     plt.legend(['Interpolation', 'Exact'])
 
     plt.figure()

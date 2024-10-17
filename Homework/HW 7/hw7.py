@@ -12,11 +12,11 @@ def eval_monomial(xeval, coef, N, Neval):
     return yeval
 
 def driver_1():
-    N = 2
+    N = 18
     Neval = 1000
     xeval = np.linspace(-1, 1, Neval+1)
     f = lambda x: 1/(1+100*x**2)
-    x_j = lambda j: -1 + (j - 1)*(1/(N - 1))
+    x_j = lambda j: -1 + (j - 1)*(2/(N - 1))
 
     # create interpolation nodes
     xint = np.zeros(N+1)
@@ -28,7 +28,6 @@ def driver_1():
     # create the Vandermonde matrix
     V = np.zeros((N+1,N+1))
     
-    ''' fill the first column'''
     for j in range(N+1):
        V[j][0] = 1.0
 
@@ -39,7 +38,17 @@ def driver_1():
     Vinv = inv(V)
     coef = Vinv @ yint
 
+    # create interpolation
     yeval = eval_monomial(xeval, coef, N, Neval)
+    yexact = f(xeval)
+
+    plt.title("Monomial Interpolation")
+    plt.xlabel("x")
+    plt.ylabel("y")
+    plt.plot(xeval, yeval, 'r-')
+    plt.plot(xeval, yexact, 'b-')
+    plt.legend(["Interpolation", "Exact"])
+    plt.show()
 
 if __name__ == "__main__":
     driver_1()
