@@ -39,7 +39,7 @@ def eval_lagrange(x, xint, yint, N):
         yeval += yint[i] * L
     return yeval
 
-'''for kk in range(Neval+1):
+for kk in range(Neval+1):
     yeval[kk] = eval_lagrange(xeval[kk], xint, yint, N+1)
 
 plt.xlabel("x")
@@ -56,7 +56,7 @@ plt.xlabel("x")
 plt.ylabel("Error")
 plt.semilogy(xeval, abs(yeval - yexact))
 
-plt.show()'''
+plt.show()
 
 # Hermite interpolation
 def eval_hermite(x, xint, yint, yintp, N):
@@ -70,7 +70,7 @@ def eval_hermite(x, xint, yint, yintp, N):
     return yeval
 
 
-'''yeval = np.zeros(Neval+1)
+yeval = np.zeros(Neval+1)
 
 for kk in range(Neval+1):
     yeval[kk] = eval_hermite(xeval[kk], xint, yint, yintp, N+1)
@@ -89,7 +89,7 @@ plt.xlabel("x")
 plt.ylabel("Error")
 plt.semilogy(xeval, abs(yeval - yexact))
 
-plt.show()'''
+plt.show()
 
 # Natural cubic spline interpolation
 def create_natural_spline(yint,xint,N):
@@ -144,6 +144,7 @@ def create_natural_spline(yint,xint,N):
        D[j] = (yint[j+1]/h[j]) - (h[j]/6)*M[j+1] # find the D coefficients
     return(M,C,D)
        
+
 def eval_local_spline(xeval,xi,xip,yi,yip,Mi,Mip,Ci,Di):
 # Evaluates the local spline as defined in class
 # xip = x_{i+1}; xi = x_i
@@ -162,8 +163,6 @@ def eval_cubic_spline(xeval,Neval,xint,yint,Nint,M,C,D):
     yeval = np.zeros(Neval+1)
     
     for j in range(Nint):
-        '''find indices of xeval in interval (xint(jint),xint(jint+1))'''
-        '''let ind denote the indices in the intervals'''
         atmp = xint[j]
         btmp= xint[j+1]
         
@@ -178,7 +177,7 @@ def eval_cubic_spline(xeval,Neval,xint,yint,Nint,M,C,D):
 
     return(yeval)
 
-'''M,C,D = create_natural_spline(yint,xint,N)
+M,C,D = create_natural_spline(yint,xint,N)
 yeval = eval_cubic_spline(xeval,Neval,xint,yint,N,M,C,D)
 
 plt.xlabel("x")
@@ -195,7 +194,7 @@ plt.xlabel("x")
 plt.ylabel("Error")
 plt.semilogy(xeval, abs(yeval - yexact))
 
-plt.show()'''
+plt.show()
 
 # clamped cubic spline interpolation
 def create_clamped_spline(yint,xint,N,yintp):
@@ -249,7 +248,7 @@ def create_clamped_spline(yint,xint,N,yintp):
        D[j] = (yint[j+1]/h[j]) - (h[j]/6)*M[j+1] # find the D coefficients
     return(M,C,D)
 
-'''M,C,D = create_clamped_spline(yint,xint,N,yintp)
+M,C,D = create_clamped_spline(yint,xint,N,yintp)
 yeval = eval_cubic_spline(xeval,Neval,xint,yint,N,M,C,D)
 
 plt.xlabel("x")
@@ -266,7 +265,7 @@ plt.xlabel("x")
 plt.ylabel("Error")
 plt.semilogy(xeval, abs(yeval - yexact))
 
-plt.show()'''
+plt.show()
 
 ''' Problem 3 '''
 N = 20
@@ -302,21 +301,20 @@ def create_periodic_spline(yint,xint,N,yintp):
     A[N-1,N] = h[N-1]
 
     # set the periodic conditions
-    A[0,0] = 2*(h[0]+h[N])
-    A[0,N] = h[N]
-    A[N,0] = h[N]
+    '''A[0,0] = 2*(h[0]+h[-1])
+    A[0,-1] = h[-1]
+    A[-1,0] = h[-1]
+    A[-1,-1] = 2*(h[-1]+h[-2])
+    b[0] = (3 / h[0]) * (yint[1] - yint[0]) - (3 / h[-1]) * (yint[0] - yint[-1])
+    b[-1] = (3 / h[-1]) * (yint[0] - yint[-1]) - (3 / h[-2]) * (yint[-1] - yint[-2])'''
 
     print(A)
-    #exit()
 
 #  Invert A    
     Ainv = inv(A)
 
 # solver for M   
     M  = Ainv @ b # vector containing second derivatives at every node (nx1)
-
-    # second derivative conditions
-    M[0] = M[N]
     
 #  Create the linear coefficients
     C = np.zeros(N)
@@ -326,7 +324,7 @@ def create_periodic_spline(yint,xint,N,yintp):
        D[j] = (yint[j+1]/h[j]) - (h[j]/6)*M[j+1] # find the D coefficients
     return(M,C,D)
 
-xint = np.linspace(0, 2*np.pi, N+2)
+xint = np.linspace(0, 2*np.pi, (N+1)+1)
 xeval = np.linspace(0, 2*np.pi, Neval+1)
 yint = f(xint)
 yintp = fp(xint)
@@ -343,10 +341,10 @@ plt.plot(xeval, yeval, 'r-')
 plt.plot(xeval, yexact)
 plt.legend(['Interpolation', 'Exact'])
 
-'''plt.figure()
+plt.figure()
 plt.title("Periodic Interpolation Error")
 plt.xlabel("x")
 plt.ylabel("Error")
-plt.semilogy(xeval, abs(yeval - yexact))'''
+plt.semilogy(xeval, abs(yeval - yexact))
 
 plt.show()
