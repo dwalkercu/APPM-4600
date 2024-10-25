@@ -301,12 +301,12 @@ def create_periodic_spline(yint,xint,N,yintp):
     A[N-1,N] = h[N-1]
 
     # set the periodic conditions
-    '''A[0,0] = 2*(h[0]+h[-1])
+    A[0,0] = 2*(h[0]+h[-1])
     A[0,-1] = h[-1]
     A[-1,0] = h[-1]
     A[-1,-1] = 2*(h[-1]+h[-2])
     b[0] = (3 / h[0]) * (yint[1] - yint[0]) - (3 / h[-1]) * (yint[0] - yint[-1])
-    b[-1] = (3 / h[-1]) * (yint[0] - yint[-1]) - (3 / h[-2]) * (yint[-1] - yint[-2])'''
+    b[-1] = (3 / h[-1]) * (yint[0] - yint[-1]) - (3 / h[-2]) * (yint[-1] - yint[-2])
 
     print(A)
 
