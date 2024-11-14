@@ -14,7 +14,8 @@ def eval_composite_trap(M,a,b,f):
   h = (b - a) / M
   x = np.linspace(a, b, M+1)
   y = f(x)
-  return (h/2) * (y[0] + 2*np.sum(y[1:-1]) + y[-1])
+  Ihat = (h/2) * (y[0] + 2*np.sum(y[1:-1]) + y[-1])
+  return Ihat,x,None
 
 
 def eval_composite_simpsons(M,a,b,f):
@@ -22,6 +23,11 @@ def eval_composite_simpsons(M,a,b,f):
   put code from prelab with same returns as gauss_quad
   you can return None for the weights
   """
+  h = (b - a) / M
+  x = np.linspace(a, b, M+1)
+  y = f(x)
+  Ihat = (h/3) * (y[0] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]) + y[-1])
+  return Ihat,x,None
 
 def eval_gauss_quad(M,a,b,f):
   """
@@ -93,3 +99,22 @@ def adaptive_quad(a,b,f,tol,M,method):
         j = maxit
   return I,np.unique(X),nsplit
 
+def driver():
+    a = 0.1
+    b = 2
+    f = lambda x: np.sin(1/x)
+    tol = 10**-3
+    M = 5
+    # comp trap
+    res = adaptive_quad(a, b, f, tol, M, eval_composite_trap)
+    print(f"Num panels: {len(res[1])}") 
+    # comp simps
+    res = adaptive_quad(a, b, f, tol, M, eval_composite_simpsons)
+    print(f"Num panels: {len(res[1])}") 
+    # gauss
+    res = adaptive_quad(a, b, f, tol, M, eval_gauss_quad)
+    print(f"Num panels: {len(res[1])}") 
+
+
+if __name__ == "__main__":
+    driver()
