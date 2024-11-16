@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 # specify the quadrature method 
 # (eval_gauss_quad, eval_composite_trap, eval_composite_simpsons)
-method = eval_composite_simpsons
+method = eval_gauss_quad
 
 # interval of integration [a,b]
 a = 0.1; b = 2.
@@ -56,7 +56,10 @@ for iM in range(nM):
   # save grids for M = 2
   if M == 2:
     mesh = X
-  
+
+# number of mesh subintervals
+print(len(mesh))
+
 # plot the old and new error for each f and M
 fig,ax = plt.subplots(1,2)
 ax[0].semilogy(Ms,err_old,'ro--')
