@@ -42,6 +42,9 @@ def choose_n_by_simpsons_error(a, b, f4p, tol):
     h = (np.abs(tol*180/((b-a)*f4p(eta))))**(1/4)
     return int((b-a) / h)
 
+def richardson_extrapolation(Ih, Ih2, p):
+    return (2**p*Ih2 - Ih) / (2**p - 1)
+
 ''' Question 1 '''
 print("Question 1")
 
@@ -78,3 +81,11 @@ tol = 1e-4
 f = lambda t: np.cos(1/t)*t
 
 print(f"Eval Composite Simpsons (5 nodes): {eval_comp_simpsons_q2(a, b, f, 5)}")
+
+''' Question 3 '''
+print("\nQuestion 3")
+A = [[1,1,1],[1,2*np.sqrt(2),8],[1,4,16]]
+b = [1,0,0]
+
+x = np.linalg.solve(A, b)
+print("x: ", x)
