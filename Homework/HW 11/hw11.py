@@ -14,6 +14,14 @@ def eval_comp_simpsons(a, b, f, N):
     Ihat = (h/3)*(y[0] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]) + y[-1])
     return Ihat
 
+def eval_comp_simpsons_q2(a, b, f, N):
+    h = (b - a) / N
+    x = np.linspace(a, b, N+1)
+    y = f(x)
+    y[0] = 0
+    Ihat = (h/3)*(y[0] + 4*np.sum(y[1:-1:2]) + 2*np.sum(y[2:-2:2]) + y[-1])
+    return Ihat
+
 def find_eta(a, b, f, tol):
     new_eta = a
     x = np.arange(a, b, tol)
@@ -35,6 +43,7 @@ def choose_n_by_simpsons_error(a, b, f4p, tol):
     return int((b-a) / h)
 
 ''' Question 1 '''
+print("Question 1")
 
 # (a)
 a = -5
@@ -62,4 +71,10 @@ spquad2, err, info = quad(f, a, b, epsabs=tol, epsrel=tol, full_output=True)
 print(f"SciPy Quad ({tol}): I={spquad2}, nevals={info.get('neval')}")
 
 ''' Question 2 '''
+print("\nQuestion 2")
+a = 0
+b = 1
+tol = 1e-4
+f = lambda t: np.cos(1/t)*t
 
+print(f"Eval Composite Simpsons (5 nodes): {eval_comp_simpsons_q2(a, b, f, 5)}")
