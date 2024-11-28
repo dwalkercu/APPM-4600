@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import numdifftools as nd
 from numpy.linalg import inv
 from scipy import integrate
 
@@ -66,89 +67,54 @@ def eval_cubic_splines(x0, x, a, b, c, d):
 
     return y
 
-def cardinal_cubic_basis(x, knots):
-    x = np.asarray(x)
-    knots = np.asarray(knots)
+def truncated_power_basis(x0, knots):
+    n_points = len(x0)
     n_knots = len(knots)
-    n_points = len(x)
-    
-    # Initialize basis matrix
+    deg = 3
+
     basis = np.zeros((n_points, n_knots))
-    
-    def M1(t):
-        return (1 - t)**3 / 6
 
-    def M2(t):
-        return (3*t**3 - 6*t**2 + 4) / 6
+    # construct basis functions 1 up to deg+1
+    for i in range(deg+1):
+        for j in range(n_points):
+            basis[j][i] = x0[j]**i
 
-    def M3(t):
-        return (-3*t**3 + 3*t**2 + 3*t + 1) / 6
-
-    def M4(t):
-        return t**3 / 6
-    
-    # Construct basis functions
-    for i in range(n_points):
-        for j in range(n_knots-1):
-            # Find which knot interval contains the current x value
-            if knots[j] <= x[i] <= knots[j+1]:
-                # Compute normalized position within interval
-                t = (x[i] - knots[j]) / (knots[j+1] - knots[j])
-                
-                # Add contributions to relevant basis functions
-                if j >= 1:
-                    basis[i, j-1] += M1(t)
-                basis[i, j] += M2(t)
-                basis[i, j+1] += M3(t)
-                if j < n_knots-2:
-                    basis[i, j+2] += M4(t)
+    # construct basis functions from deg+1 to n_knots
+    for i in range(deg, n_knots):
+        for j in range(n_points):
+            basis[j][i] = np.max([0, (x0[j] - knots[i-deg])**deg])
     
     return basis
 
-def second_derivative_penalty_matrix(knots):
-    knots = np.asarray(knots)
+def natural_truncated_power_basis(x0, knots):
+    n_points = len(x0)
     n_knots = len(knots)
-    P = np.zeros((n_knots, n_knots))
+    basis = np.zeros((n_points, n_knots))
+
+    basis[:,0] = 1 # constant basis function
+    basis[:,1] = x0 # linear basis function
+
+    for i in range(2, n_knots):
+        for j in range(n_points):
+            basis[j][i] = np.max([0, (x0[j] - knots[i-2])**3])
     
-    def M1_dd(t):
-        return 1-np.ones_like(t)
+    return basis
 
-    def M2_dd(t):
-        return 3*t - 2
 
-    def M3_dd(t):
-        return -3*t + 1
+def second_derivative_penalty_matrix(truncated_power_basis, x0):
+    basis = truncated_power_basis
+    n_points = basis.shape[0]
+    n_basis_fns = basis.shape[1]
+    pmatrix = np.zeros((n_basis_fns, n_basis_fns))
 
-    def M4_dd(t):
-        return np.ones_like(t)
+    for i in range(n_basis_fns):
+        d2ydx2i = np.gradient(np.gradient(basis[:,i], x0), x0)
+        for j in range(n_basis_fns):
+            d2ydx2j = np.gradient(np.gradient(basis[:,j], x0), x0)
+            for k in range(n_points):
+                pmatrix[i][j] += d2ydx2i[k]*d2ydx2j[k] # a discrete sum over many points -- the closest thing to an inner product in this context
     
-    # List of second derivative functions
-    M_dd = [M1_dd, M2_dd, M3_dd, M4_dd]
-    
-    # Construct penalty matrix by evaluating integrals over each knot interval
-    for interval in range(n_knots - 1):
-        h = knots[interval + 1] - knots[interval]
-        
-        # For each pair of basis functions that overlap on this interval
-        for i in range(max(0, interval-2), min(n_knots, interval+3)):
-            for j in range(max(0, interval-2), min(n_knots, interval+3)):
-                # Determine which parts of the cardinal basis functions we're using
-                i_idx = i - interval + 1
-                j_idx = j - interval + 1
-                
-                if 0 <= i_idx <= 3 and 0 <= j_idx <= 3:
-                    # Define the integrand as the product of second derivatives
-                    def integrand(t):
-                        return M_dd[i_idx](t) * M_dd[j_idx](t)
-                    
-                    # Scale the integral by the knot spacing
-                    scaling = 1.0 / (h**3)
-                    
-                    # Compute the integral using scipy's quad
-                    result, _ = integrate.quad(integrand, 0, 1)
-                    P[i, j] += result * scaling
-
-    return P
+    return pmatrix
 
 def driver():
     f = lambda x: np.cos(x)

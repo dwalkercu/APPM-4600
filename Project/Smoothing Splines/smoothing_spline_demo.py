@@ -53,22 +53,23 @@ def eval_smoothing_splines(x0, x, data, lda=0.1):
     N = len(x)
     Neval = len(x0)
     y = np.zeros(Neval)
-    basis = cs.cardinal_cubic_basis(x0, x)
+    basis = cs.natural_truncated_power_basis(x0, x)
+    n_basis_fns = basis.shape[1]
     
     # construct G
-    G = np.zeros((N, N))
+    G = np.zeros((N, n_basis_fns))
     for i in range(N-1):
         node_ind = np.where((x0 >= x[i]))[0][0]
-        for j in range(N):
+        for j in range(n_basis_fns):
             G[i][j] = basis[node_ind][j] 
 
     # fill in last row of G
     node_ind = np.where(x0 >= x[-1])[0][0]
-    for j in range(N):
+    for j in range(n_basis_fns):
         G[-1][j] = basis[node_ind][j] 
 
-    # construct penalty matrix (second-derivative matrix)
-    omega = cs.second_derivative_penalty_matrix(x)
+    # construct second-derivative penalty matrix
+    omega = cs.second_derivative_penalty_matrix(basis, x0)
 
     # get coefs for basis functions
     b = data
@@ -77,14 +78,9 @@ def eval_smoothing_splines(x0, x, data, lda=0.1):
     # construct splines
     for i in range(Neval):
         tmp_sum = 0
-        for k in range(N):
+        for k in range(n_basis_fns):
             tmp_sum += coefs[k]*basis[i][k]
         y[i] = tmp_sum
-
-    # remove weird spiking manually
-    for i in range(len(y)-1):
-        if np.abs(y[i+1] - y[i]) > 0.1:
-            y[i+1] = (y[i])
 
     return y
 
@@ -103,7 +99,7 @@ def driver():
     data = x**3 + noise
     (M,coefs) = regularized_least_squares(x, data, deg=3, lda=0.01, penalty="derivative")
     rls = M @ coefs
-    ss = eval_smoothing_splines(x0, x, data, lda=1e-5)
+    ss = eval_smoothing_splines(x0, x, data, lda=1e-7)
     spss = make_smoothing_spline(x, data, lam=1e-5)
 
     plt.scatter(x, data, label="data")
