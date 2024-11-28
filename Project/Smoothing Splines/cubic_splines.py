@@ -1,8 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import numdifftools as nd
-from numpy.linalg import inv
-from scipy import integrate
+from numpy.linalg import inv, matrix_transpose
 
 def create_natural_spline_matrix(x):
     N = len(x)
@@ -70,25 +69,6 @@ def eval_cubic_splines(x0, x, a, b, c, d):
 def truncated_power_basis(x0, knots):
     n_points = len(x0)
     n_knots = len(knots)
-    deg = 3
-
-    basis = np.zeros((n_points, n_knots))
-
-    # construct basis functions 1 up to deg+1
-    for i in range(deg+1):
-        for j in range(n_points):
-            basis[j][i] = x0[j]**i
-
-    # construct basis functions from deg+1 to n_knots
-    for i in range(deg, n_knots):
-        for j in range(n_points):
-            basis[j][i] = np.max([0, (x0[j] - knots[i-deg])**deg])
-    
-    return basis
-
-def natural_truncated_power_basis(x0, knots):
-    n_points = len(x0)
-    n_knots = len(knots)
     basis = np.zeros((n_points, n_knots))
 
     basis[:,0] = 1 # constant basis function
@@ -99,7 +79,6 @@ def natural_truncated_power_basis(x0, knots):
             basis[j][i] = np.max([0, (x0[j] - knots[i-2])**3])
     
     return basis
-
 
 def second_derivative_penalty_matrix(truncated_power_basis, x0):
     basis = truncated_power_basis
@@ -112,22 +91,41 @@ def second_derivative_penalty_matrix(truncated_power_basis, x0):
         for j in range(n_basis_fns):
             d2ydx2j = np.gradient(np.gradient(basis[:,j], x0), x0)
             for k in range(n_points):
-                pmatrix[i][j] += d2ydx2i[k]*d2ydx2j[k] # a discrete sum over many points -- the closest thing to an inner product in this context
+                pmatrix[i][j] += d2ydx2i[k]*d2ydx2j[k] # a discrete sum over many points -- the closest thing to an inner product without integrating
     
     return pmatrix
 
-def driver():
-    f = lambda x: np.cos(x)
-    x0 = np.linspace(-np.pi, np.pi, 1000)
-    x = np.arange(-np.pi,np.pi,0.5)
+def eval_smoothing_splines(x0, x, data, lda=1e-5):
+    N = len(x)
+    Neval = len(x0)
+    y = np.zeros(Neval)
+    basis = truncated_power_basis(x0, x)
+    n_basis_fns = basis.shape[1]
+    
+    # construct G
+    G = np.zeros((N, n_basis_fns))
+    for i in range(N-1):
+        node_ind = np.where((x0 >= x[i]))[0][0]
+        for j in range(n_basis_fns):
+            G[i][j] = basis[node_ind][j] 
 
-    (a,b,c,d) = get_cubic_spline_coefs(f, x)
-    y = eval_cubic_splines(x0, x, a, b, c, d)
+    # fill in last row of G
+    node_ind = np.where(x0 >= x[-1])[0][0]
+    for j in range(n_basis_fns):
+        G[-1][j] = basis[node_ind][j] 
 
-    plt.plot(x0, f(x0), label="function")
-    plt.plot(x0, y, label="me")
-    plt.legend()
-    plt.show()
+    # construct second-derivative penalty matrix
+    omega = second_derivative_penalty_matrix(basis, x0)
 
-#if __name__ == "__main__":
-#    driver()
+    # get coefs for basis functions
+    b = data
+    coefs = inv(matrix_transpose(G) @ G + lda*omega) @ (matrix_transpose(G) @ b)
+
+    # construct splines
+    for i in range(Neval):
+        tmp_sum = 0
+        for k in range(n_basis_fns):
+            tmp_sum += coefs[k]*basis[i][k]
+        y[i] = tmp_sum
+
+    return y
