@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import numdifftools as nd
-from numpy.linalg import inv, matrix_transpose
+from numpy.linalg import pinv, matrix_transpose
 
 def create_natural_spline_matrix(x):
     N = len(x)
@@ -36,7 +36,7 @@ def create_f_vector(f, h, x):
 def get_cubic_spline_coefs(f, x):
     (A,h) = create_natural_spline_matrix(x)
     f_vec = create_f_vector(f, h, x)
-    b = inv(A) @ f_vec
+    b = pinv(A) @ f_vec
     d = f(x)
 
     N = len(x)
@@ -95,7 +95,7 @@ def second_derivative_penalty_matrix(truncated_power_basis, x0):
     
     return pmatrix
 
-def eval_smoothing_splines(x0, x, data, lda=1e-5):
+def eval_smoothing_spline(x0, x, data, lda=1e-5):
     N = len(x)
     Neval = len(x0)
     y = np.zeros(Neval)
@@ -105,21 +105,21 @@ def eval_smoothing_splines(x0, x, data, lda=1e-5):
     # construct G
     G = np.zeros((N, n_basis_fns))
     for i in range(N-1):
-        node_ind = np.where((x0 >= x[i]))[0][0]
+        node_ind = np.where(x0 >= x[i])[0][0]
         for j in range(n_basis_fns):
             G[i][j] = basis[node_ind][j] 
 
     # fill in last row of G
     node_ind = np.where(x0 >= x[-1])[0][0]
     for j in range(n_basis_fns):
-        G[-1][j] = basis[node_ind][j] 
+        G[-1][j] = basis[node_ind][j]
 
     # construct second-derivative penalty matrix
     omega = second_derivative_penalty_matrix(basis, x0)
 
     # get coefs for basis functions
     b = data
-    coefs = inv(matrix_transpose(G) @ G + lda*omega) @ (matrix_transpose(G) @ b)
+    coefs = pinv(matrix_transpose(G) @ G + lda*omega) @ (matrix_transpose(G) @ b)
 
     # construct splines
     for i in range(Neval):

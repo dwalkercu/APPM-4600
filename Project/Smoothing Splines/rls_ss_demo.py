@@ -2,7 +2,7 @@ import cubic_splines as cs
 import numpy as np
 import numdifftools as nd
 import matplotlib.pyplot as plt
-from numpy.linalg import inv, matrix_transpose
+from numpy.linalg import pinv, matrix_transpose
 from scipy.interpolate import make_smoothing_spline
 
 def discrete_least_squares(x, data, deg=1):
@@ -14,11 +14,11 @@ def discrete_least_squares(x, data, deg=1):
             M[i][j] = (x[i])**j
 
     b = data
-    coefs = inv(matrix_transpose(M) @ M) @ (matrix_transpose(M) @ b)
+    coefs = pinv(matrix_transpose(M) @ M) @ (matrix_transpose(M) @ b)
 
     return (M,coefs)
 
-def regularized_least_squares(x, data, M=None, deg=1, lda=0.5, penalty="ridge"):
+def regularized_least_squares(x, data, deg=2, lda=0.01, M=None):
     N = len(data)
 
     # construct M 
@@ -31,23 +31,18 @@ def regularized_least_squares(x, data, M=None, deg=1, lda=0.5, penalty="ridge"):
     # construct gamma
     gamma = np.zeros((N, deg+1))
     
-    # second derivative matrix
-    if(penalty.lower() == "derivative"):
-        for i in range(N):
-            for j in range(deg+1):
-                f = lambda xvar: xvar**j # assuming canonical basis
-                h = x[i+1]-x[i] if i < N-1 else x[i]-x[i-1]
-                gamma[i][j] = nd.Derivative(f, h, n=2)(x[i])
-
-    # default to ridge regression
-    else:
-        for i in range(N):
-            gamma[i][i] = 1
+    # second derivative penalty matrix
+    for i in range(N):
+        for j in range(deg+1):
+            f = lambda xvar: xvar**j # assuming canonical basis
+            h = x[i+1]-x[i] if i < N-1 else x[i]-x[i-1]
+            h = h if h != 0 else 1e-10
+            gamma[i][j] = nd.Derivative(f, h, n=2)(x[i])
 
     b = data
-    coefs = inv(matrix_transpose(M) @ M + lda*(matrix_transpose(gamma) @ gamma)) @ (matrix_transpose(M) @ b)
+    coefs = pinv(matrix_transpose(M) @ M + lda*(matrix_transpose(gamma) @ gamma)) @ (matrix_transpose(M) @ b)
 
-    return (M,coefs)
+    return M @ coefs
 
 def driver():
     # generate Gaussian noise
@@ -62,9 +57,8 @@ def driver():
 
     # apply noise and generate least squares / smoothing splines solutions
     data = x**3 + noise
-    (M,coefs) = regularized_least_squares(x, data, deg=3, lda=0.01, penalty="derivative")
-    rls = M @ coefs
-    ss = cs.eval_smoothing_splines(x0, x, data, lda=1e-7)
+    rls = regularized_least_squares(x, data, deg=3)
+    ss = cs.eval_smoothing_spline(x0, x, data, lda=1e-7)
     spss = make_smoothing_spline(x, data, lam=1e-5)
 
     plt.scatter(x, data, label="data")
