@@ -71,12 +71,9 @@ def truncated_power_basis(x0, knots):
     n_knots = len(knots)
     basis = np.zeros((n_points, n_knots))
 
-    basis[:,0] = 1 # constant basis function
-    basis[:,1] = x0 # linear basis function
-
-    for i in range(2, n_knots):
+    for i in range(0, n_knots):
         for j in range(n_points):
-            basis[j][i] = np.max([0, (x0[j] - knots[i-2])**3])
+            basis[j][i] = np.max([0, (x0[j] - knots[i])**3])
     
     return basis
 

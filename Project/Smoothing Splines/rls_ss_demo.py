@@ -44,7 +44,7 @@ def regularized_least_squares(x, data, deg=3, lda=0.01, M=None):
 
     return M @ coefs
 
-def find_opt_lambda_rls(x, data, deg=3, min_lda=0, max_lda=1, n=100):
+def find_opt_lambda_rls(x, data, deg=3, min_lda=1e-5, max_lda=1, n=100):
     N = len(x)
     lda = 0
     

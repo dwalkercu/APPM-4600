@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import cubic_splines as cs
 import pandas as pd
 from rls_ss_demo import regularized_least_squares, find_opt_lambda_rls
@@ -29,10 +30,12 @@ def driver():
     df = df_o.dropna()
 
     # smoothing spline
-    x = np.zeros(len(df))
-    for i in range(len(x)):
+    Neval = 1000
+    N = len(df)
+    x = np.zeros(N)
+    for i in range(N):
         x[i] = i
-    x0 = np.linspace(0, len(x), 1000)
+    x0 = np.linspace(0, N, Neval)
     data = df["Weekly Deaths"].to_numpy()
     ss_data = cs.eval_smoothing_spline(x0, x, data, lda=1e-5)
 
@@ -40,26 +43,35 @@ def driver():
     rls3 = regularized_least_squares(x, data, deg=3, lda=1)
     rls4 = regularized_least_squares(x, data, deg=4, lda=1)
 
-    plt.figure()
+    # x-axis values for plotting
+    date_np = df["Date"].to_numpy()
+    x_dates = pd.date_range(start=date_np[0], end=date_np[-1], periods=N)
+    x0_dates = pd.date_range(start=date_np[0], end=date_np[-1], periods=Neval)
+
+    _, ax = plt.subplots()
     plt.title("Weekly Deaths in the United States from Covid-19")
-    plt.xlabel("Date")
+    plt.xlabel("Year")
     plt.ylabel("Weekly Deaths")
-    plt.plot(x, df["Weekly Deaths"], label="Original Data")
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    ax.plot(df["Date"], df["Weekly Deaths"], label="Original Data")
     plt.legend()
 
-    plt.figure()
+    _, ax = plt.subplots()
     plt.title("Weekly Deaths in the United States from Covid-19")
     plt.xlabel("Date")
     plt.ylabel("Weekly Deaths")
-    plt.plot(x0, ss_data, 'b-', label="Smoothing Spline")
-    plt.plot(x, rls3, 'g-', label="Regularized Least Squares Degree 3")
-    plt.plot(x, rls4, 'r-', label="Regularized Least Squares Degree 4")
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    ax.plot(x0_dates, ss_data, 'b-', label="Smoothing Spline")
+    ax.plot(x_dates, rls3, 'g-', label="Regularized Least Squares Degree 3")
+    ax.plot(x_dates, rls4, 'r-', label="Regularized Least Squares Degree 4")
+
     plt.legend()
     plt.show()
 
-
     ''' Trends from noisy data -- can we get the same trend from adding AWGN?'''
-    # 10dB SNR
+    '''# 10dB SNR
     noisy_data = awgn(data, 10)
     ss_noisy_data = cs.eval_smoothing_spline(x0, x, noisy_data, lda=cs.find_opt_lambda_ss(x, noisy_data, min_lda=1e-5, max_lda=10, n=100))
 
@@ -160,7 +172,7 @@ def driver():
     plt.plot(x0, ss_noisy_data, 'g-', label="Noisy Smoothing Spline")
     plt.legend()
 
-    plt.show()
+    plt.show()'''
     
 
 if __name__ == "__main__":
