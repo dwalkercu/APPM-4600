@@ -18,7 +18,7 @@ def discrete_least_squares(x, data, deg=1):
 
     return (M,coefs)
 
-def regularized_least_squares(x, data, deg=2, lda=0.01, M=None):
+def regularized_least_squares(x, data, deg=3, lda=0.01, M=None):
     N = len(data)
 
     # construct M 
@@ -44,6 +44,36 @@ def regularized_least_squares(x, data, deg=2, lda=0.01, M=None):
 
     return M @ coefs
 
+def find_opt_lambda_rls(x, data, deg=3, min_lda=0, max_lda=1, n=100):
+    N = len(x)
+    lda = 0
+    
+    # get a subsample of the data as a validation set
+    val_size = int(N/4) if N>8 else 2
+    ind = np.arange(0, N, 1)
+    np.random.shuffle(ind)
+    val_ind = np.random.choice(ind, val_size, replace=False)
+    val_x = x[val_ind]
+    val = data[val_ind]
+
+    # get the optimal lambda using the validation set
+    min_err = np.inf
+    out_lda = min_lda
+    for i in range(1,n):
+        rls = regularized_least_squares(val_x, val, deg=deg, lda=lda)
+
+        # minimize error
+        err = (val - rls)**2
+        mean_err = np.mean(err)
+        if mean_err < min_err:
+            min_err = mean_err
+            out_lda = lda
+        
+        lda = min_lda + (max_lda - min_lda)/n
+
+    print(out_lda)
+    return out_lda 
+
 def driver():
     # generate Gaussian noise
     noise_stdev = 0.4
@@ -57,14 +87,12 @@ def driver():
 
     # apply noise and generate least squares / smoothing splines solutions
     data = x**3 + noise
-    rls = regularized_least_squares(x, data, deg=3)
-    ss = cs.eval_smoothing_spline(x0, x, data, lda=1e-7)
-    spss = make_smoothing_spline(x, data, lam=1e-5)
+    rls = regularized_least_squares(x, data, deg=3, lda=find_opt_lambda_rls(x, data))
+    ss = cs.eval_smoothing_spline(x0, x, data, lda=cs.find_opt_lambda_ss(x, data, min_lda=1e-5, max_lda=10, n=100))
 
     plt.scatter(x, data, label="data")
     plt.plot(x, rls, 'r-', label="rls")
     plt.plot(x0, ss, 'g-', label="my smoothing spline")
-    #plt.plot(x, spss(x), 'b-', label="scipy smoothing spline")
     plt.legend()
     plt.show()
 
