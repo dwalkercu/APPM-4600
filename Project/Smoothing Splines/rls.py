@@ -1,11 +1,23 @@
+'''
+A regularized least squares library which allows for variable degree polynomial regression as well as cross-validation.
+AUTHOR: Derek Walker
+'''
+
 import smooth_splines as cs
 import numpy as np
 import numdifftools as nd
 import matplotlib.pyplot as plt
 from numpy.linalg import pinv, matrix_transpose
-from scipy.interpolate import make_smoothing_spline
 
 def regularized_least_squares(x, data, deg=3, lda=0.01, M=None):
+    """Returns the RLS polynomial used in the regression of the data input parameter.
+
+    x - the x-values of the data
+    data - the data to perform the regression on
+    deg - the degree of the RLS polynomial
+    lda - the tuning parameter for the penalty matrix
+    M - a specified basis. None => this function will create a M basis matrix
+    """
     N = len(data)
 
     # construct M 
@@ -33,6 +45,15 @@ def regularized_least_squares(x, data, deg=3, lda=0.01, M=None):
     return M @ coefs
 
 def find_opt_lambda(x, data, deg=3, min_lda=1e-5, max_lda=1, n=100):
+    """Returns the optimal lambda value using cross-validation -- the minimization of the error over n iterations.
+    
+    x - the x-values of the data
+    data - the data to perform the regression on
+    deg - the degree of polynomial to perform the cross-validation with
+    min_lda - the minimum acceptable value of the tuning parameter lambda
+    max_lda - the maximum acceptable value of the tuning parameter lambda
+    n - the number of iterations to perform the cross-validation
+    """
     N = len(x)
     lda = 0
     

@@ -1,3 +1,8 @@
+'''
+A demo of cubic smoothing splines on an up-to-date Covid-19 dataset.
+AUTHOR: Derek Walker
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -6,8 +11,7 @@ import pandas as pd
 from rls import regularized_least_squares, find_opt_lambda
 
 def awgn(signal, snr_db):
-    """
-    Returns the noisy signal using additive white Gaussian noise
+    """Returns the noisy signal using additive white Gaussian noise
 
     signal - the signal to add noise to
     snr_db - the signal-to-noise ratio in dB
@@ -18,7 +22,7 @@ def awgn(signal, snr_db):
     # calculate noise power based on SNR
     noise_power = signal_power / (10**(snr_db/10))
 
-    # generate Gaussian noise with zero mean
+    # generate Gaussian noise with zero mean with variance sqrt(noise_power)
     noise = np.random.normal(0, np.sqrt(noise_power), signal.shape)
 
     # make noisy signal

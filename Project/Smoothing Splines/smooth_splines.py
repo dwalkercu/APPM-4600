@@ -1,11 +1,15 @@
+'''
+A smoothing spline library which allows for the use of a truncated power spline basis and cubic smoothing spline evaluation.
+AUTHOR: Derek Walker
+'''
+
 import numpy as np
 import matplotlib.pyplot as plt
 import numdifftools as nd
 from numpy.linalg import pinv, matrix_transpose
 
 def truncated_power_basis(x0, knots):
-    """
-    Returns a 2D numpy array of floats containing the basis functions evaluated at the given evaluation points.
+    """Returns a 2D numpy array of floats containing the basis functions evaluated at the given evaluation points.
 
     x0 - evaluation points
     knots - points which the basis functions will be defined upon -- they will be 0 to the left of each knot
@@ -26,8 +30,7 @@ def truncated_power_basis(x0, knots):
     return basis
 
 def second_derivative_penalty_matrix(basis, x0):
-    """
-    Returns the nxn second derivative penalty matrix for the given spline basis functions
+    """Returns the nxn second derivative penalty matrix for the given spline basis functions
 
     basis - basis functions of the form mxn with m evaluation points and n basis functions associated with n knots
     x0 - evaluation points of the basis
@@ -49,8 +52,7 @@ def second_derivative_penalty_matrix(basis, x0):
     return pmatrix
 
 def eval_smoothing_spline(x0, x, data, lda=0.001):
-    """
-    Returns the y-values of a smoothing spline using x0 evaluation points with x knots
+    """Returns the y-values of a smoothing spline using x0 evaluation points with x knots
     This smoothing spline uses the truncated power basis with the second derivative penalty matrix
     The individual splines are cubic polynomials.
 
@@ -94,8 +96,7 @@ def eval_smoothing_spline(x0, x, data, lda=0.001):
     return y
 
 def find_opt_lambda(x, data, min_lda=0, max_lda=1, n=100):
-    """
-    Returns the optimal lambda value using standard cross-validation of the data
+    """Returns the optimal lambda value using standard cross-validation of the data
 
     x - knots of the smoothing spline
     data - the data which the smoothing spline will minimize the error of
