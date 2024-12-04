@@ -1,66 +1,75 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import cubic_splines as cs
+import smooth_splines as ss
 import pandas as pd
-from rls_ss_demo import regularized_least_squares, find_opt_lambda_rls
+from rls import regularized_least_squares, find_opt_lambda
 
 def awgn(signal, snr_db):
-    # Calculate signal power
+    """
+    Returns the noisy signal using additive white Gaussian noise
+
+    signal - the signal to add noise to
+    snr_db - the signal-to-noise ratio in dB
+    """
+    # calculate signal power
     signal_power = np.mean(np.abs(signal)**2)
 
-    # Calculate noise power based on SNR
+    # calculate noise power based on SNR
     noise_power = signal_power / (10**(snr_db/10))
 
-    # Generate Gaussian noise with zero mean and calculated variance
+    # generate Gaussian noise with zero mean
     noise = np.random.normal(0, np.sqrt(noise_power), signal.shape)
 
-    # Add noise to the signal
+    # make noisy signal
     return signal + noise
 
 def driver():
     pd.options.mode.copy_on_write = True
 
     ''' Clear trend that can't be done using normal RLS interpolation '''
+    # make dataframe
     df_o = pd.read_csv("data_table_for_weekly_deaths__the_united_states_filtered.csv")
 
     df_o["Date"] = pd.to_datetime(df_o["Date"])
     df_o = df_o.sort_values("Date")
-
     df = df_o.dropna()
 
-    # smoothing spline
     Neval = 1000
     N = len(df)
+
+    # make smoothing spline
     x = np.zeros(N)
     for i in range(N):
         x[i] = i
     x0 = np.linspace(0, N, Neval)
     data = df["Weekly Deaths"].to_numpy()
-    ss_data = cs.eval_smoothing_spline(x0, x, data, lda=1e-5)
+    ss_data = ss.eval_smoothing_spline(x0, x, data, lda=1e-5)
 
-    # RLS
-    rls3 = regularized_least_squares(x, data, deg=3, lda=1)
-    rls4 = regularized_least_squares(x, data, deg=4, lda=1)
+    # make RLS polynomials
+    rls3 = regularized_least_squares(x, data, deg=3, lda=find_opt_lambda(x, data))
+    rls4 = regularized_least_squares(x, data, deg=4, lda=find_opt_lambda(x, data))
 
-    # x-axis values for plotting
+    # x-axis values for plotting dates nicely
     date_np = df["Date"].to_numpy()
     x_dates = pd.date_range(start=date_np[0], end=date_np[-1], periods=N)
     x0_dates = pd.date_range(start=date_np[0], end=date_np[-1], periods=Neval)
 
+    # plot original data
     _, ax = plt.subplots()
-    plt.title("Deaths in the United States from Covid-19")
+    plt.title("Weekly Deaths in the United States from Covid-19")
     plt.xlabel("Year")
-    plt.ylabel("Deaths")
+    plt.ylabel("Weekly Deaths")
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax.plot(df["Date"], df["Weekly Deaths"], label="Original Data")
     plt.legend()
 
+    # plot spline vs RLS comparison
     _, ax = plt.subplots()
-    plt.title("Deaths in the United States from Covid-19")
+    plt.title("Weekly Deaths in the United States from Covid-19")
     plt.xlabel("Date")
-    plt.ylabel("Deaths")
+    plt.ylabel("Weekly Deaths")
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax.plot(x0_dates, ss_data, 'b-', label="Smoothing Spline")
@@ -71,23 +80,25 @@ def driver():
     plt.show()
 
     ''' Trends from noisy data -- can we get the same trend from adding AWGN?'''
-    # 10dB SNR
+    # create 10dB SNR noise
     noisy_data = awgn(data, 10)
-    ss_noisy_data = cs.eval_smoothing_spline(x0, x, noisy_data, lda=cs.find_opt_lambda_ss(x, noisy_data, min_lda=1e-5, max_lda=10, n=100))
+    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=ss.find_opt_lambda(x, noisy_data, min_lda=1e-5, max_lda=10, n=100))
 
+    # plot 10dB SNR noisy data
     _, ax = plt.subplots()
-    plt.title("Noisy (10dB SNR) Deaths in the United States from Covid-19")
+    plt.title("Noisy (10dB SNR) Weekly Deaths in the United States from Covid-19")
     plt.xlabel("Date")
-    plt.ylabel("Deaths")
+    plt.ylabel("Weekly Deaths")
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax.scatter(x_dates, noisy_data, label="Noisy Data")
     plt.legend()
 
+    # plot 10dB SNR spline comparison
     _, ax = plt.subplots()
     plt.title("10dB SNR Spline Comparison")
     plt.xlabel("Date")
-    plt.ylabel("Deaths")
+    plt.ylabel("Weekly Deaths")
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
@@ -96,23 +107,11 @@ def driver():
 
     plt.show()
 
-    # 5dB SNR
-    noisy_data = awgn(data, 5)
-    ss_noisy_data = cs.eval_smoothing_spline(x0, x, noisy_data, lda=cs.find_opt_lambda_ss(x, noisy_data, min_lda=1e-5, max_lda=10, n=100))
-
-    _, ax = plt.subplots()
-    plt.title("Noisy (5dB SNR) Deaths in the United States from Covid-19")
-    plt.xlabel("Date")
-    plt.ylabel("Deaths")
-    ax.xaxis.set_major_locator(mdates.YearLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    ax.scatter(x_dates, noisy_data, label="Noisy Data")
-    plt.legend()
-
+    # plot 10dB SNR spline comparison
     _, ax = plt.subplots()
     plt.title("5dB SNR Spline Comparison")
     plt.xlabel("Date")
-    plt.ylabel("Deaths")
+    plt.ylabel("Weekly Deaths")
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
@@ -121,24 +120,25 @@ def driver():
 
     plt.show()
 
-
-    # 1dB SNR -- cross-validation overfits the data
+    # 1dB SNR -- cross-validation overfits the data?
     noisy_data = awgn(data, 1)
-    ss_noisy_data = cs.eval_smoothing_spline(x0, x, noisy_data, lda=cs.find_opt_lambda_ss(x, noisy_data, min_lda=1e-5, max_lda=10, n=100))
+    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=ss.find_opt_lambda(x, noisy_data, min_lda=1e-5, max_lda=10, n=100))
 
+    # plot 1dB SNR noisy data
     _, ax = plt.subplots()
-    plt.title("Noisy (1dB SNR) Deaths in the United States from Covid-19")
+    plt.title("Noisy (1dB SNR) Weekly Deaths in the United States from Covid-19")
     plt.xlabel("Date")
-    plt.ylabel("Deaths")
+    plt.ylabel("Weekly Deaths")
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax.scatter(x_dates, noisy_data, label="Noisy Data")
     plt.legend()
 
+    # plot 1dB SNR spline comparison
     _, ax = plt.subplots()
     plt.title("1dB SNR Spline Comparison")
     plt.xlabel("Date")
-    plt.ylabel("Deaths")
+    plt.ylabel("Weekly Deaths")
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
@@ -148,12 +148,13 @@ def driver():
     plt.show()
 
     # manual selection of lambda instead of cross-validation for 1dB SNR
-    ss_noisy_data = cs.eval_smoothing_spline(x0, x, noisy_data, lda=4.8)
+    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=4.8)
 
+    # plot manual selection lambda = 4.8 spline comparison
     _, ax = plt.subplots()
     plt.title("Manual Selection Spline Comparison")
     plt.xlabel("Date")
-    plt.ylabel("Deaths")
+    plt.ylabel("Weekly Deaths")
     ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
     ax.plot(x0_dates, ss_noisy_data, 'g-', label="Noisy Smoothing Spline")
     plt.legend()
@@ -161,12 +162,13 @@ def driver():
     plt.show()
 
     # slight oversmoothing for 1dB SNR
-    ss_noisy_data = cs.eval_smoothing_spline(x0, x, noisy_data, lda=10)
+    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=10)
 
+    # plot manual selection lambda = 10 spline comparison
     _, ax = plt.subplots()
     plt.title("Slight Underfitting Spline Comparison")
     plt.xlabel("Date")
-    plt.ylabel("Deaths")
+    plt.ylabel("Weekly Deaths")
     ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
     ax.plot(x0_dates, ss_noisy_data, 'g-', label="Noisy Smoothing Spline")
     plt.legend()
@@ -174,12 +176,13 @@ def driver():
     plt.show()
 
     # extreme oversmoothing for 1dB SNR
-    ss_noisy_data = cs.eval_smoothing_spline(x0, x, noisy_data, lda=100)
+    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=100)
 
+    # plot manual selection lambda = 100 spline comparison
     _, ax = plt.subplots()
     plt.title("Heavy Underfitting Spline Comparison")
     plt.xlabel("Date")
-    plt.ylabel("Deaths")
+    plt.ylabel("Weekly Deaths")
     ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
     ax.plot(x0_dates, ss_noisy_data, 'g-', label="Noisy Smoothing Spline")
     plt.legend()
