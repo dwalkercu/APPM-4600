@@ -3,69 +3,6 @@ import matplotlib.pyplot as plt
 import numdifftools as nd
 from numpy.linalg import pinv, matrix_transpose
 
-def create_natural_spline_matrix(x):
-    N = len(x)
-
-    # make h array
-    h = np.zeros(N)
-    for i in range(N-1):
-        h[i] = x[i+1] - x[i]
-    
-    h[-1] = h[-2] # stopgap
-
-    # make natural spline matrix
-    A = np.zeros((N, N))
-
-    # assert natural spline conditions 
-    A[0][0] = 1
-    A[N-1][N-1] = 1
-
-    for i in range(1, N-1):
-        A[i][i-1] = h[i]
-        A[i][i] = 2*(h[i] + h[i+1])
-        A[i][i+1] = h[i+1]
-
-    return (A,h)
-
-def create_f_vector(f, h, x):
-    f_vec = np.zeros(len(h))
-    for i in range(1, len(h)-2):
-        f_vec[i] = (3/h[i+1])*(f(x[i+2]) - f(x[i+1])) - (3/h[i])*(f(x[i+1]) - f(x[i]))
-    return f_vec
-
-def get_cubic_spline_coefs(f, x):
-    (A,h) = create_natural_spline_matrix(x)
-    f_vec = create_f_vector(f, h, x)
-    b = pinv(A) @ f_vec
-    d = f(x)
-
-    N = len(x)
-    a = np.zeros(N)
-    c = np.zeros(N)
-    for i in range(N-1):
-        a[i] = (b[i+1] - b[i])/(3*h[i])
-        c[i] = (f(x[i+1]) - f(x[i]))/(h[i]) - (h[i]/3)*(2*b[i] + b[i+1])
-
-    return (a,b,c,d)
-
-def eval_cubic_splines(x0, x, a, b, c, d):
-    N = len(x)
-    y = []
-    pts = []
-
-    for i in range(N-1):
-        pts = x0[np.where((x[i] <= x0) & (x[i+1] >= x0))]
-        yi = a[i]*(pts - x[i])**3 + b[i]*(pts - x[i])**2 + c[i]*(pts - x[i]) + d[i]
-        y.extend(yi)
-    
-    # add final points
-    i += 1
-    pts = x0[np.where((x0 >= x[i]))]
-    yi = a[i]*(pts - x[i])**3 + b[i]*(pts - x[i])**2 + c[i]*(pts - x[i]) + d[i]
-    y.extend(yi)
-
-    return y
-
 def truncated_power_basis(x0, knots):
     n_points = len(x0)
     n_knots = len(knots)
