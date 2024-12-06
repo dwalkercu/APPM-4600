@@ -88,16 +88,6 @@ def driver():
     noisy_data = awgn(data, 10)
     ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=ss.find_opt_lambda(x, noisy_data, min_lda=1e-5, max_lda=10, n=100))
 
-    # plot 10dB SNR noisy data
-    _, ax = plt.subplots()
-    plt.title("Noisy (10dB SNR) Weekly Deaths in the United States from Covid-19")
-    plt.xlabel("Date")
-    plt.ylabel("Weekly Deaths")
-    ax.xaxis.set_major_locator(mdates.YearLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    ax.scatter(x_dates, noisy_data, label="Noisy Data")
-    plt.legend()
-
     # plot 10dB SNR spline comparison
     _, ax = plt.subplots()
     plt.title("10dB SNR Spline Comparison")
@@ -124,13 +114,13 @@ def driver():
 
     plt.show()
 
-    # 1dB SNR -- cross-validation overfits the data?
-    noisy_data = awgn(data, 1)
+    # 2dB SNR
+    noisy_data = awgn(data, 2)
     ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=ss.find_opt_lambda(x, noisy_data, min_lda=1e-5, max_lda=10, n=100))
 
-    # plot 1dB SNR noisy data
+    # plot 2dB SNR noisy data
     _, ax = plt.subplots()
-    plt.title("Noisy (1dB SNR) Weekly Deaths in the United States from Covid-19")
+    plt.title("Noisy (2dB SNR) Weekly Deaths in the United States from Covid-19")
     plt.xlabel("Date")
     plt.ylabel("Weekly Deaths")
     ax.xaxis.set_major_locator(mdates.YearLocator())
@@ -138,9 +128,9 @@ def driver():
     ax.scatter(x_dates, noisy_data, label="Noisy Data")
     plt.legend()
 
-    # plot 1dB SNR spline comparison
+    # plot 2dB SNR spline comparison
     _, ax = plt.subplots()
-    plt.title("1dB SNR Spline Comparison")
+    plt.title("2dB SNR Spline Comparison")
     plt.xlabel("Date")
     plt.ylabel("Weekly Deaths")
     ax.xaxis.set_major_locator(mdates.YearLocator())
@@ -151,10 +141,10 @@ def driver():
 
     plt.show()
 
-    # manual selection of lambda instead of cross-validation for 1dB SNR
-    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=4.8)
+    # manual selection of lambda instead of cross-validation for 2dB SNR
+    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=15.0)
 
-    # plot manual selection lambda = 4.8 spline comparison
+    # plot manual selection lambda
     _, ax = plt.subplots()
     plt.title("Manual Selection Spline Comparison")
     plt.xlabel("Date")
@@ -165,24 +155,10 @@ def driver():
 
     plt.show()
 
-    # slight oversmoothing for 1dB SNR
-    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=10)
+    # extreme oversmoothing for 2dB SNR
+    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=300)
 
-    # plot manual selection lambda = 10 spline comparison
-    _, ax = plt.subplots()
-    plt.title("Slight Underfitting Spline Comparison")
-    plt.xlabel("Date")
-    plt.ylabel("Weekly Deaths")
-    ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
-    ax.plot(x0_dates, ss_noisy_data, 'g-', label="Noisy Smoothing Spline")
-    plt.legend()
-
-    plt.show()
-
-    # extreme oversmoothing for 1dB SNR
-    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=100)
-
-    # plot manual selection lambda = 100 spline comparison
+    # plot manual selection
     _, ax = plt.subplots()
     plt.title("Heavy Underfitting Spline Comparison")
     plt.xlabel("Date")

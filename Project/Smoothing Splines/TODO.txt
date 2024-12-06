@@ -1,0 +1,3 @@
+- figure out what's wrong with the cross-validation functions. why always 0.1?
+- retake images once theory has been finalized and the code has been made to follow the theory exactly
+- go back through entire section and re-read and edit

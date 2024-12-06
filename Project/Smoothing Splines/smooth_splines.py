@@ -1,5 +1,5 @@
 '''
-A smoothing spline library which allows for the use of a truncated power spline basis and cubic smoothing spline evaluation.
+A smoothing spline library which allows for the use of a cubic truncated power spline basis and smoothing spline evaluation.
 AUTHOR: Derek Walker
 '''
 
@@ -22,32 +22,29 @@ def truncated_power_basis(x0, knots):
     basis[:,1] = x0 # linear basis function
 
     # discard the first two knots to have a basis the same length as the number of knots
-    for i in range(2, n_knots): 
+    for i in range(1, n_knots-1): 
         for j in range(n_points):
             # calculate the truncated basis functions
             basis[j][i] = np.max([0, (x0[j] - knots[i])**3])
     
     return basis
 
-def second_derivative_penalty_matrix(basis, x0):
+def second_derivative_penalty_matrix(basis, x0, knots):
     """Returns the nxn second derivative penalty matrix for the given spline basis functions
 
     basis - basis functions of the form mxn with m evaluation points and n basis functions associated with n knots
     x0 - evaluation points of the basis
     """
+    n_knots = len(knots)
     n_points = basis.shape[0]
     n_basis_fns = basis.shape[1]
-    pmatrix = np.zeros((n_basis_fns, n_basis_fns))
+    pmatrix = np.zeros((n_points, n_basis_fns))
 
-    for i in range(n_basis_fns):
-        # second derivative of first basis function
-        d2ydx2i = np.gradient(np.gradient(basis[:,i], x0), x0)
+    for i in range(n_knots):
         for j in range(n_basis_fns):
-            # second derivative of second basis function
             d2ydx2j = np.gradient(np.gradient(basis[:,j], x0), x0)
-            for k in range(n_points):
-                # calculate the inner product using discrete sum
-                pmatrix[i][j] += d2ydx2i[k]*d2ydx2j[k]
+            # second derivative of basis function evaluated at the ith evaluation point
+            pmatrix[i][j] = d2ydx2j[np.where(x0 >= knots[i])[0][0]]
     
     return pmatrix
 
@@ -69,22 +66,17 @@ def eval_smoothing_spline(x0, x, data, lda=0.001):
     
     # construct G
     G = np.zeros((N, n_basis_fns))
-    for i in range(N-1):
+    for i in range(N):
         node_ind = np.where(x0 >= x[i])[0][0]
         for j in range(n_basis_fns):
             G[i][j] = basis[node_ind][j] 
 
-    # fill in last row of G
-    node_ind = np.where(x0 >= x[-1])[0][0]
-    for j in range(n_basis_fns):
-        G[-1][j] = basis[node_ind][j]
-
     # construct second-derivative penalty matrix
-    omega = second_derivative_penalty_matrix(basis, x0)
+    gamma = second_derivative_penalty_matrix(basis, x0, x)
 
     # get coefs for basis functions
     b = data
-    coefs = pinv(matrix_transpose(G) @ G + lda*omega) @ (matrix_transpose(G) @ b)
+    coefs = pinv(matrix_transpose(G) @ G + lda*matrix_transpose(gamma) @ gamma) @ (matrix_transpose(G) @ b)
 
     # construct splines
     for i in range(Neval):
@@ -133,5 +125,7 @@ def find_opt_lambda(x, data, min_lda=0, max_lda=1, n=100):
         
         # update lambda
         lda = min_lda + (max_lda - min_lda)/n
+    
+    print("Optimal SS lambda: ", out_lda)
 
     return out_lda
