@@ -101,19 +101,6 @@ def driver():
 
     plt.show()
 
-    # plot 10dB SNR spline comparison
-    _, ax = plt.subplots()
-    plt.title("5dB SNR Spline Comparison")
-    plt.xlabel("Date")
-    plt.ylabel("Weekly Deaths")
-    ax.xaxis.set_major_locator(mdates.YearLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
-    ax.plot(x0_dates, ss_noisy_data, 'g-', label="Noisy Smoothing Spline")
-    plt.legend()
-
-    plt.show()
-
     # 2dB SNR
     noisy_data = awgn(data, 2)
     ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=ss.find_opt_lambda(x, noisy_data, min_lda=1e-5, max_lda=10, n=100))
