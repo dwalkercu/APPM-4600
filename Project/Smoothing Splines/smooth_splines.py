@@ -103,6 +103,7 @@ def find_opt_lambda(x, data, min_lda=0, max_lda=1, n=100):
     ind = np.arange(0, N, 1)
     np.random.shuffle(ind)
     train_ind = np.random.choice(ind, train_size, replace=False)
+    train_ind = np.sort(train_ind)
     train_x = x[train_ind]
     train = data[train_ind]
 
@@ -116,8 +117,11 @@ def find_opt_lambda(x, data, min_lda=0, max_lda=1, n=100):
 
         # get error at every point on the smoothing spline
         err = np.zeros(train_size)
-        for i,v_ind,v in zip(range(train_size), train_ind, train):
-            err[i] = (v - ss[v_ind])**2
+        for i,v_ind in zip(range(train_size), train_ind):
+            # get the knot x0 index to compare knots vs data points
+            # this works because every data point is a knot
+            ss_ind = np.where((x0 >= x[v_ind]))[0][0]
+            err[i] = (train[i] - ss[ss_ind])**2
 
         # calculate MSE and compare to stored min_err
         mean_err = np.mean(err)
@@ -126,7 +130,7 @@ def find_opt_lambda(x, data, min_lda=0, max_lda=1, n=100):
             out_lda = lda
         
         # update lambda
-        lda = min_lda + (max_lda - min_lda)/n
+        lda = lda + (max_lda - min_lda)/n
     
     print("Optimal SS lambda: ", out_lda)
 

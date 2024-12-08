@@ -49,15 +49,15 @@ def driver():
     x0 = np.linspace(0, N, Neval)
     data = df["Weekly Deaths"].to_numpy()
     ss_data = ss.eval_smoothing_spline(x0, x, data, lda=1e-5)
-
-    # make RLS polynomials
-    rls3 = regularized_least_squares(x, data, deg=3, lda=find_opt_lambda(x, data))
-    rls4 = regularized_least_squares(x, data, deg=4, lda=find_opt_lambda(x, data))
-
+   
     # x-axis values for plotting dates nicely
     date_np = df["Date"].to_numpy()
     x_dates = pd.date_range(start=date_np[0], end=date_np[-1], periods=N)
     x0_dates = pd.date_range(start=date_np[0], end=date_np[-1], periods=Neval)
+
+    # make RLS polynomials
+    rls3 = regularized_least_squares(x, data, deg=3, lda=find_opt_lambda(x, data))
+    rls4 = regularized_least_squares(x, data, deg=4, lda=find_opt_lambda(x, data))
 
     # plot original data
     _, ax = plt.subplots()
@@ -86,7 +86,7 @@ def driver():
     ''' Trends from noisy data -- can we get the same trend from adding AWGN?'''
     # create 10dB SNR noise
     noisy_data = awgn(data, 10)
-    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=ss.find_opt_lambda(x, noisy_data, min_lda=1e-5, max_lda=10, n=100))
+    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=ss.find_opt_lambda(x, noisy_data, min_lda=1e-5, max_lda=1, n=100))
 
     # plot 10dB SNR spline comparison
     _, ax = plt.subplots()
@@ -103,7 +103,7 @@ def driver():
 
     # 2dB SNR
     noisy_data = awgn(data, 2)
-    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=ss.find_opt_lambda(x, noisy_data, min_lda=1e-5, max_lda=10, n=100))
+    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=ss.find_opt_lambda(x, noisy_data, min_lda=1, max_lda=10, n=100))
 
     # plot 2dB SNR noisy data
     _, ax = plt.subplots()
