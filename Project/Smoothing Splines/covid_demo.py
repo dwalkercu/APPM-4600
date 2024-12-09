@@ -57,6 +57,8 @@ def driver():
 
     # make RLS polynomials
     rls3 = regularized_least_squares(x, data, deg=3, lda=find_opt_lambda(x, data))
+
+    # make sinusoidal RLS polynomial
     rls4 = regularized_least_squares(x, data, deg=4, lda=find_opt_lambda(x, data))
 
     # plot original data
