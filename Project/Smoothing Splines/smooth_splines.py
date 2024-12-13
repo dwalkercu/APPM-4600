@@ -6,7 +6,7 @@ AUTHOR: Derek Walker
 import numpy as np
 import matplotlib.pyplot as plt
 import numdifftools as nd
-import kfold
+from kfold import k_folds, select_new_folds
 from numpy.linalg import pinv, matrix_transpose
 
 def truncated_power_basis(x0, knots):
@@ -102,12 +102,12 @@ def find_opt_lambda(x, data, k, min_lda=0, max_lda=1):
     N = len(x) # number of knots
     opt_lda = min_lda
     scores = []
-    folds = kfold.k_folds(x, data, k)
+    folds = k_folds(x, data, k)
 
     for i in range(k):
         # select new folds
         last_ind = 0
-        (val,train,last_ind) = kfold.select_new_folds(folds, last_ind)
+        (val,train,last_ind) = select_new_folds(folds, last_ind)
 
         # train lambda
         train_lda = min_lda

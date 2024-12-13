@@ -8,25 +8,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import smooth_splines as ss
 import pandas as pd
+from lib import awgn
 from rls import regularized_least_squares, find_opt_lambda
-
-def awgn(signal, snr_db):
-    """Returns the noisy signal using additive white Gaussian noise
-
-    signal - the signal to add noise to
-    snr_db - the signal-to-noise ratio in dB
-    """
-    # calculate signal power
-    signal_power = np.mean(np.abs(signal)**2)
-
-    # calculate noise power based on SNR
-    noise_power = signal_power / (10**(snr_db/10))
-
-    # generate Gaussian noise with zero mean with variance sqrt(noise_power)
-    noise = np.random.normal(0, np.sqrt(noise_power), signal.shape)
-
-    # make noisy signal
-    return signal + noise
 
 def driver():
     pd.options.mode.copy_on_write = True
@@ -126,20 +109,6 @@ def driver():
     plt.ylabel("Weekly Deaths")
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
-    ax.plot(x0_dates, ss_noisy_data, 'g-', label="Noisy Smoothing Spline")
-    plt.legend()
-
-    plt.show()
-
-    # manual selection of lambda instead of cross-validation for 2dB SNR
-    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=15.0)
-
-    # plot manual selection lambda
-    _, ax = plt.subplots()
-    plt.title("Manual Selection Spline Comparison")
-    plt.xlabel("Date")
-    plt.ylabel("Weekly Deaths")
     ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
     ax.plot(x0_dates, ss_noisy_data, 'g-', label="Noisy Smoothing Spline")
     plt.legend()

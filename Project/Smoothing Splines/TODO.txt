@@ -1,2 +1,3 @@
-- RKHS (wtf is this?)
-- streaming data (take some data as a dataset and stream new data using same generation method and least squares cubic spline that shit in real time)
+- edit the report to only analyze the left trend of the covid data using K-fold CV
+- add a subsubsection that explains K-fold CV
+- make a point about how I use nonparametric stats in the report
