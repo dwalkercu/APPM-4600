@@ -1,3 +1,2 @@
-- figure out what's wrong with the cross-validation functions. why always 0.1?
-- retake images once theory has been finalized and the code has been made to follow the theory exactly
-- go back through entire section and re-read and edit
+- RKHS (wtf is this?)
+- streaming data (take some data as a dataset and stream new data using same generation method and least squares cubic spline that shit in real time)

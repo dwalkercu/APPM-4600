@@ -6,6 +6,7 @@ AUTHOR: Derek Walker
 import numpy as np
 import matplotlib.pyplot as plt
 import numdifftools as nd
+import kfold
 from numpy.linalg import pinv, matrix_transpose
 
 def truncated_power_basis(x0, knots):
@@ -89,51 +90,66 @@ def eval_smoothing_spline(x0, x, data, lda=0.001):
 
     return y
 
-def find_opt_lambda(x, data, min_lda=0, max_lda=1, n=100):
-    """Returns the optimal lambda trainue using standard cross-trainidation of the data
+def find_opt_lambda(x, data, k, min_lda=0, max_lda=1):
+    """Returns the optimal lambda trainue using K-fold cross-validation of the data
 
     x - knots of the smoothing spline
     data - the data which the smoothing spline will minimize the error of
+    k - the number of folds to use in K-fold cross validation
     min_lda - the minimum acceptable trainue of lambda
     max_lda - the maximum acceptable trainue of lambda
-    n - the size of the training set
     """
     N = len(x) # number of knots
+    opt_lda = min_lda
+    scores = []
+    folds = kfold.k_folds(x, data, k)
+
+    for i in range(k):
+        # select new folds
+        last_ind = 0
+        (val,train,last_ind) = kfold.select_new_folds(folds, last_ind)
+
+        # train lambda
+        train_lda = min_lda
+        lda = min_lda
+        min_err = np.inf
+        for j in range(k-1):
+            x_train = train[j,0]
+            y_train = train[j,1]
+
+            # make new smoothing spline
+            x0 = np.linspace(np.min(x_train), np.max(x_train), (int)(len(x_train)+len(x_train)*0.25))
+            ss = eval_smoothing_spline(x0, x_train, y_train, lda)
+
+            # calculate MSE using the training set
+            errs = np.zeros(N)
+            for z in range(N):
+                ss_ind = np.abs(x0 - x[z]).argmin()
+                errs[z] = np.abs(ss[ss_ind] - data[z])
+
+            mse = errs.mean()
+            if mse < min_err:
+                train_lda = lda
+                min_err = mse
+
+            lda = lda + (max_lda-min_lda)/(k-1)
+
+        # test the spline on the validation set and record the score
+        x_val = val[0]
+        y_val = val[1]
+        x0 = np.linspace(np.min(x_val), np.max(x_val), (int)(len(x_val)+len(x_val)*0.25))
+        ss = eval_smoothing_spline(x0, x_val, y_val, train_lda)
+
+        errs = np.zeros(N)
+        for z in range(N):
+            ss_ind = np.abs(x0 - x[z]).argmin()
+            errs[z] = np.abs(ss[ss_ind] - data[z])
+
+        mse = errs.mean()
+        scores.append((mse, train_lda))
     
-    # get a subsample of the data as a training set
-    train_size = int(0.20*N) if N>20 else 2
-    ind = np.arange(0, N, 1)
-    np.random.shuffle(ind)
-    train_ind = np.random.choice(ind, train_size, replace=False)
-    train_ind = np.sort(train_ind)
-    train_x = x[train_ind]
-    train = data[train_ind]
+    # choose the best lambda
+    opt_lda = np.min(scores, axis=0)[1]
+    print(f"Optimal SS Lambda: {opt_lda}")
 
-    # get the optimal lambda using the training set
-    x0 = np.linspace(np.min(train_x), np.max(train_x), N)
-    min_err = np.inf
-    out_lda = min_lda
-    lda = min_lda
-    for _ in range(n):
-        ss = eval_smoothing_spline(x0, train_x, train, lda)
-
-        # get error at every point on the smoothing spline
-        err = np.zeros(train_size)
-        for i,v_ind in zip(range(train_size), train_ind):
-            # get the knot x0 index to compare knots vs data points
-            # this works because every data point is a knot
-            ss_ind = np.where((x0 >= x[v_ind]))[0][0]
-            err[i] = (train[i] - ss[ss_ind])**2
-
-        # calculate MSE and compare to stored min_err
-        mean_err = np.mean(err)
-        if mean_err < min_err:
-            min_err = mean_err
-            out_lda = lda
-        
-        # update lambda
-        lda = lda + (max_lda - min_lda)/n
-    
-    print("Optimal SS lambda: ", out_lda)
-
-    return out_lda
+    return opt_lda
