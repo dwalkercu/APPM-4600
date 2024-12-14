@@ -14,7 +14,6 @@ from rls import regularized_least_squares, find_opt_lambda
 def driver():
     pd.options.mode.copy_on_write = True
 
-    ''' Clear trend that can't be done using normal RLS interpolation '''
     # make dataframe
     df_o = pd.read_csv("data_table_for_weekly_deaths__the_united_states_filtered.csv")
 
@@ -40,11 +39,19 @@ def driver():
     x_dates = pd.date_range(start=date_np[0], end=date_np[-1], periods=N)
     x0_dates = pd.date_range(start=date_np[0], end=date_np[-1], periods=Neval)
 
-    # make RLS polynomials
-    '''rls3 = regularized_least_squares(x, data, deg=3, lda=find_opt_lambda(x, data))
+    # make canonical deg 3 RLS polynomial
+    rls3 = regularized_least_squares(x, data, deg=10, lda=find_opt_lambda(x, data))
 
-    # make sinusoidal RLS polynomial
-    rls4 = regularized_least_squares(x, data, deg=4, lda=find_opt_lambda(x, data))
+    # make trigonometric deg 2 RLS polynomial
+    trig_deg = 2
+    omega = 3*2*np.pi/(N-1)
+    M = np.zeros((N, trig_deg+1))
+    for i in range(N):
+        M[i][0] = x[i]
+        M[i][1] = np.cos(omega*x[i])
+        M[i][2] = np.sin(omega*x[i])
+    
+    rls_trig = regularized_least_squares(x, data, deg=trig_deg, M=M, lda=1e-8)
 
     # plot original data
     _, ax = plt.subplots()
@@ -64,13 +71,12 @@ def driver():
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax.plot(x0_dates, ss_data, 'b-', label="Smoothing Spline")
-    ax.plot(x_dates, rls3, 'g-', label="Regularized Least Squares Degree 3")
-    ax.plot(x_dates, rls4, 'r-', label="Regularized Least Squares Degree 4")
+    ax.plot(x_dates, rls3, 'g-', label="Tikhonov Degree 10")
+    ax.plot(x_dates, rls_trig, 'r-', label="Tikhonov Trigonometric")
     plt.legend()
 
-    plt.show()'''
+    plt.show()
 
-    ''' Trends from noisy data -- can we get the same trend from adding AWGN?'''
     # create 10dB SNR noise
     noisy_data = awgn(data, 10)
     ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=ss.find_opt_lambda(x, noisy_data, num_folds, min_lda=0.01, max_lda=15))
@@ -115,6 +121,21 @@ def driver():
 
     plt.show()
 
+    # manual selection for qualtitative comparison
+    ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=15)
+
+    _, ax = plt.subplots()
+    plt.title("2dB SNR Spline Comparison Manual Selection")
+    plt.xlabel("Date")
+    plt.ylabel("Weekly Deaths")
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
+    ax.plot(x0_dates, ss_noisy_data, 'g-', label="Noisy Smoothing Spline")
+    plt.legend()
+
+    plt.show()
+
     # extreme oversmoothing for 2dB SNR
     ss_noisy_data = ss.eval_smoothing_spline(x0, x, noisy_data, lda=300)
 
@@ -123,6 +144,8 @@ def driver():
     plt.title("Heavy Underfitting Spline Comparison")
     plt.xlabel("Date")
     plt.ylabel("Weekly Deaths")
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
     ax.plot(x0_dates, ss_data, 'b-', label="Clear Smoothing Spline")
     ax.plot(x0_dates, ss_noisy_data, 'g-', label="Noisy Smoothing Spline")
     plt.legend()

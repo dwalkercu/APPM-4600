@@ -21,7 +21,7 @@ def regularized_least_squares(x, data, deg=3, lda=0.01, M=None):
     N = len(data)
 
     # construct M 
-    if M == None:
+    if type(M) == type(None):
         M = np.zeros((N, deg+1))
         for i in range(N):
             for j in range(deg+1):
@@ -44,7 +44,7 @@ def regularized_least_squares(x, data, deg=3, lda=0.01, M=None):
 
     return M @ coefs
 
-def find_opt_lambda(x, data, deg=3, min_lda=1e-5, max_lda=1, n=100):
+def find_opt_lambda(x, data, deg=3, M=None, min_lda=1e-5, max_lda=1, n=100):
     """Returns the optimal lambda value using cross-validation -- the minimization of the error over n iterations.
     
     x - the x-values of the data
@@ -69,7 +69,10 @@ def find_opt_lambda(x, data, deg=3, min_lda=1e-5, max_lda=1, n=100):
     min_err = np.inf
     out_lda = min_lda
     for i in range(1,n):
-        rls = regularized_least_squares(val_x, val, deg=deg, lda=lda)
+        if type(M) == type(None):
+            rls = regularized_least_squares(val_x, val, deg=deg, lda=lda)
+        else:
+            rls = regularized_least_squares(val_x, val, deg=deg, lda=lda, M=M)
 
         # minimize error
         err = (val - rls)**2
@@ -78,6 +81,6 @@ def find_opt_lambda(x, data, deg=3, min_lda=1e-5, max_lda=1, n=100):
             min_err = mean_err
             out_lda = lda
         
-        lda = min_lda + (max_lda - min_lda)/n
+        lda = lda + (max_lda - min_lda)/n
 
     return out_lda 

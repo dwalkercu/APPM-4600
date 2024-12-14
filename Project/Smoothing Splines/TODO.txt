@@ -1,3 +1,3 @@
 - edit the report to only analyze the left trend of the covid data using K-fold CV
 - add a subsubsection that explains K-fold CV
-- make a point about how I use nonparametric stats in the report
+- add a subsubsection about how all this is non-parametric statistics
